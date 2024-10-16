@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { Setting } from "./setting.entity";
 import { CreateSettingDto } from "./dto/create-setting.dto";
 import { UpdateSettingDto } from "./dto/update-setting.dto";
@@ -11,7 +11,15 @@ export class SettingsService{
     ) {}
 
     async createSetting(createSettingDto: CreateSettingDto): Promise<Setting> {
-        return this.settingsRepository.create({...createSettingDto});
+        try {
+            const setting = await this.settingsRepository.create({ ...createSettingDto });
+            return setting;            
+        } catch (error) {
+            if (error.name === 'SequelizeForeignKeyConstraintError') {
+                throw new BadRequestException('Invalid account reference');
+            }
+            throw error;
+        }
     }
 
     async updateSetting(id: number, updateSettingDto: UpdateSettingDto): Promise<Setting> {
